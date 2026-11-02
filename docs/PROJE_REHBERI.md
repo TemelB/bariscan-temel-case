@@ -6,7 +6,7 @@
 
 - `features/ui/careers.feature`: Ana sayfa, QA ilanları, Sales Operations alternatif başvuru akışı ve takım kartlarını açıp kapatma.
 - `features/api/pet_crud.feature`: Bağımsız CRUD, form-data güncelleme ve status ile arama dahil altı pozitif senaryo.
-- `features/api/pet_negative.feature`: Sekiz negatif API senaryosu. Senaryolar API grubunda çalışır.
+- `features/api/pet_negative.feature`: Yedi negatif API senaryosu. Senaryolar API grubunda çalışır.
 
 API senaryoları artık ayrı `Scenario` bloklarıdır. Tek senaryo üzerinde çalışmak için `@wip` etiketini o senaryonun üstüne taşı. Read, Update ve Delete kendi ön koşul kaydını oluşturur; başka bir senaryonun önce çalışmasına ihtiyaç duymaz.
 

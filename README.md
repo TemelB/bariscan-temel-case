@@ -92,7 +92,7 @@ And the pet response should have name 'case-pet-updated' and status 'sold'
 
 Create/read/update/delete, form updates and status searches have explicit domain steps. Negative cases describe invalid IDs or malformed JSON; the deliberately invalid raw payload is kept in Java and sent without serialization. Each scenario owns its test data, and cleanup deletes only IDs allocated for creation by that scenario. Temporary `@wip`, descriptive tags and response assertions work as before.
 
-This design makes the feature files readable without knowing HTTP transport details. New business operations may require new Java steps, while the HTTP client remains reusable. Earlier generic HTTP-step records in `prompts/` describe development history and are superseded by the domain-step design.
+This design makes the feature files readable without knowing HTTP transport details. New business operations may require new Java steps, while the HTTP client remains reusable.
 
 ## JMeter
 
@@ -235,7 +235,7 @@ mvn test -Dcucumber.filter.tags="@api and not @knownIssue"
 mvn test -Dcucumber.filter.tags="@wip and not @knownIssue"
 ```
 
-Known issues are included by default. The reviewed copy's implicit `not @knownIssue` filter was not adopted. Exclusion must be explicit, for example `-Dcucumber.filter.tags="not @knownIssue"`; a green scoped run is not a passing full suite. New failures must be investigated before being labelled `@knownIssue`. Tags are case-sensitive: use `@teamsToggle`, not `@teamstoggle`.
+Known issues are included by default. Exclusion must be explicit, for example `-Dcucumber.filter.tags="not @knownIssue"`; a green scoped run is not a passing full suite. New failures must be investigated before being labelled `@knownIssue`. Tags are case-sensitive: use `@teamsToggle`, not `@teamstoggle`.
 
 ## Validation status
 
@@ -244,7 +244,7 @@ The current suite contains 16 scenarios: six positive API, seven negative API an
 | Scope | Latest result | Evidence |
 | --- | --- | --- |
 | Compile / Cucumber matching | 16 scenarios matched in refactor dry run; latest live runs compiled | Dry run is not live success |
-| Full API selection (`@api`) | 13 selected, 13 passed, 0 failed; 100% | 1 November 2026 live run; `target/review-api.json`, `target/review-api.html` |
+| Full API selection (`@api`) | 13 selected, 13 passed, 0 failed; 100% | 1 November 2026 live run; `target/simplification-api.json`, `target/simplification-api.html` |
 | Invalid-ID GET/DELETE | Both passed the current 404 assertions | The Swagger 400 discrepancy remains API-001 |
 | Latest supplemental UI selection | 2 selected, 0 passed, 2 failed at Chrome session creation | 2 November 2026 visible attempt; `target/final-review-ui.json` |
 | Earlier candidate Sales Operations and teams-toggle run | Both passed | Candidate-confirmed earlier run; not the latest assistant execution |

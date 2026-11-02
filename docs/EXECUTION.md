@@ -1,38 +1,30 @@
-# Execution and review notes
+# Execution and verification notes
 
-Last verified: 1 November 2026. The current suite has 16 scenarios: six positive API, seven negative API and three UI.
+Last reviewed: 2 November 2026. The suite contains 16 scenarios: six positive API, seven negative API and three UI. Run dates are specified separately below.
 
-## Current verification
+## Verification summary
 
 | Check | Result | Scope / evidence |
 | --- | --- | --- |
-| Compile and Cucumber step matching | 16 scenarios matched in the refactor dry run; latest live selections compiled | Dry run establishes step matching only |
-| Full API selection (`@api`) | 13 selected, 13 passed, 0 failed, 0 skipped; 100% | Live run; `target/review-api.json`, `target/review-api.html` |
-| Invalid-ID GET/DELETE | Both passed with expected HTTP 404 | Current observed-behavior checks; Swagger 400 discrepancy remains API-001 |
-| Earlier full UI selection (`@ui`), headless | 3 selected, 0 passed, 3 failed | Chrome session creation failed before page steps |
-| Earlier full UI selection (`@ui`), visible | 3 selected, 0 passed, 3 failed | Same Chrome session creation failure |
-| Earlier candidate Sales Operations / teams-toggle | Both passed | Earlier candidate verification, distinct from latest assistant attempts |
-| Current JMeter plan | 3 samples, 2 passed, 1 failed; home HTTP 403 | 2 November 2026 CLI run; sanitized sample summary retained |
+| Compilation and step matching | 16 scenarios matched; BUILD SUCCESS | Dry run on 2 November 2026; not live success |
+| Full API selection (`@api`) | 13 selected, 13 passed, 0 failed, 0 skipped; 100% | Live run on 1 November 2026; `target/simplification-api.json`, `target/simplification-api.html` |
+| Invalid-ID GET/DELETE | Both passed the current HTTP 404 assertions | The documented HTTP 400 discrepancy remains API-001 |
+| Latest supplemental UI selection | 2 selected, 0 passed, 2 failed before navigation | Visible run on 2 November 2026; `target/final-review-ui.json`, `target/final-review-ui.html` |
+| Candidate UI verification | Sales Operations and teams-toggle passed | Candidate-confirmed run on 1 November 2026; separate from the latest assistant attempt |
+| Required QA flow | Candidate observed 0 open positions | UI-001; latest assistant attempt did not reach the site |
+| Current JMeter plan | 3 samples, 2 passed, 1 failed; home HTTP 403 | CLI run on 2 November 2026; [sanitized summary](../load-tests/evidence/2026-11-02/summary.csv) |
 
-## Current implementation
+## API
 
-- Domain-oriented pet creation, retrieval, update and delete steps; HTTP details and payload construction remain in Java.
-- Six positive API scenarios: create, read, JSON update, form update, find by status, delete.
-- Seven negative API scenarios: missing-ID read/delete, malformed-ID read/delete, malformed JSON create/update, missing-ID form update.
-- Numeric status-code parameters, independent fixtures, cleanup limited to owned records and request/response logging.
-- Home-page presence/visibility waits and normalized job comparisons.
-- Expanded team-card validation, collapse and re-expansion checks.
-- Headless Chrome by default; `-Dheadless=false` selects visible execution.
-- Optional Maven load profile pinned to JMeter 5.6.3; manually rebuilt three-request plan for home, laptop search and an unlikely query, each asserting HTTP 200; the laptop and nonexistent-term requests additionally check their response content.
-- UI/API prompt records distinguish source messages from retrospective evaluations. Load-test prompt records have been restored with actual requests for diagnosis and assertion guidance; manual JMeter configuration is distinguished from AI assistance.
+Scenarios use domain-oriented steps and Java-side HTTP/payload construction. `PetFixture` allocates an unused positive ID and prepares independently verified prerequisites. Only ID collisions are retried; unexpected service responses fail immediately. Cleanup deletes only IDs registered for creation by that scenario.
 
-Generic HTTP request steps, the custom-content-type step, unsupported-media-type scenario, Turkish-character sampler and page-2 sampler are absent from the current implementation.
-
-## API live run
+The six positive cases cover create, read, JSON update, form update, find by status and delete. The seven negative cases cover missing-ID read/delete, malformed-ID read/delete, malformed JSON create/update and missing-ID form update. Form update verifies persistence with a subsequent GET; find-by-status checks the fixture's own pet ID.
 
 ```bash
-mvn -o test -Dcucumber.filter.tags="@api" -Dcucumber.plugin="pretty,com.casestudy.reporting.ScenarioSummaryPlugin,json:target/review-api.json,html:target/review-api.html"
+mvn test -Dcucumber.filter.tags="@api"
 ```
+
+Latest live API result:
 
 ```text
 Selected: 13 | Passed: 13 | Failed: 0 | Skipped: 0
@@ -40,55 +32,40 @@ Pass rate: 100.00%
 BUILD SUCCESS
 ```
 
-Form update verifies persistence with a subsequent GET. Find-by-status checks the fixture’s own ID. Negative cases retain explicit assertions. Malformed-ID scenarios currently expect the observed 404, not the documented 400; their passing result is not a resolved contract discrepancy.
+Malformed-ID cases assert the observed 404, not the Swagger-documented 400. Passing these assertions does not resolve that contract discrepancy. Request/response logs are printed and attached to Cucumber and Allure reports. Sensitive authentication and cookie headers are redacted.
 
-## UI live attempts
+## UI
 
-The full `@ui` selection was run in both headless and visible modes. Both attempts failed all three scenarios with `SessionNotCreatedException: Chrome instance exited`. The failure occurs before navigation, so these attempts do not establish application-level behavior, current vacancy availability or a new UI regression.
+The latest supplemental selection attempted the Sales Operations application flow and teams-toggle scenario in visible Chrome. Both failed with `SessionNotCreatedException: Chrome instance exited` before navigation. This is a browser-startup limitation in the assistant execution environment; it does not establish current vacancy availability or an application-level regression.
 
 ```bash
-mvn -o test -Dcucumber.filter.tags="@ui" -Dheadless=true -Dcucumber.plugin="pretty,com.casestudy.reporting.ScenarioSummaryPlugin,json:target/review-ui.json,html:target/review-ui.html"
-mvn -o test -Dcucumber.filter.tags="@ui" -Dheadless=false -Dcucumber.plugin="pretty,com.casestudy.reporting.ScenarioSummaryPlugin,json:target/review-ui-visible.json,html:target/review-ui-visible.html"
+mvn test -Dcucumber.filter.tags="@availableJobApplication or @teamsToggle" -Dheadless=false
 ```
 
-Earlier candidate runs passed Sales Operations and teams-toggle; the original QA flow reached zero open positions. Those results remain historical candidate verification and do not replace the latest execution outcome. Rerun the full UI selection in an environment where Chrome can start before claiming full UI success. No application is submitted.
+Separate candidate verification passed these two scenarios. The required QA scenario retains QA/Istanbul expectations and previously reached a card with zero open positions. Sales Operations is a separate alternative and does not establish that QA requirements passed. No application is submitted. Rerun the full UI selection where Chrome can start before claiming full UI success:
+
+```bash
+mvn test -Dcucumber.filter.tags="@ui" -Dheadless=false
+```
 
 ## JMeter
 
-The current manually rebuilt JMX has three requests: home, laptop search and an unlikely query. Summary Report / HTML dashboard expose response times, throughput and error percentage. The candidate reported completing manual checks. No fresh assistant-measured sampler results are claimed in this review.
+The manually rebuilt plan uses one user, one loop and three requests: home, laptop search and an unlikely query. All three assert HTTP 200. Search requests additionally validate the laptop heading/product-card markup and the empty-result message.
 
-Earlier five-sampler results describe a superseded plan and are not part of the current verification table. The old JTL has been removed from the working tree; it is not referenced as current evidence.
+The 2 November CLI run returned HTTP 403 for home and HTTP 200 for both searches; both search content checks passed. Result: 3 samples, 2 passed, 1 failed (33.33% errors). HTTP 403 is not accepted as success, and the plan is not claimed as a fully successful run or a capacity benchmark. The exact edge-security rule responsible for the block was not confirmed.
 
-## Report handling
+Retained evidence: [sample summary](../load-tests/evidence/2026-11-02/summary.csv) and [scope / JMX hash](../load-tests/evidence/2026-11-02/README.md). Raw JTL and dashboard remain ignored under `load-tests/results/`. The launcher parses quoted and multiline CSV records and returns failure for failed samples. The parser was checked against the same JTL and cases containing quoted commas, embedded newlines, reordered columns, and invalid/empty data.
 
-The review API and UI JSON/HTML reports use separate filenames and remain Git-ignored under `target/`. Their console summaries identify the selected scope. Generated browser profiles, driver logs, raw browser HTML and IDE files remain excluded from delivery. This review does not commit or push changes.
+```bash
+mvn verify -Pload
+# Or, with JMeter installed:
+bash load-tests/run.sh
+```
 
+## Reports and review scope
 
-## Allure integration verification
+Allure Cucumber adapter 2.29.1 and Maven plugin 2.15.2 (CLI 2.30.0) are configured. Results are stored under `target/allure-results/`; `mvn allure:report` generates `target/site/allure-maven-plugin/`. API traffic and UI failure attachments are included when available. Gson 2.13.2 is required by REST Assured for Map-to-JSON serialization. Allure generation was verified with 13 passed API results and their traffic attachments.
 
-Allure Cucumber 7 adapter 2.29.1 and Maven plugin 2.15.2 (report CLI 2.30.0) are configured. Results are stored under `target/allure-results/`; `mvn allure:report` generates `target/site/allure-maven-plugin/`. Existing Cucumber attachments appear in Allure.
+UI page objects, API fixture/transport separation and the JMeter plan were reviewed against the three task summaries. The corresponding [review records](../prompts/README.md) distinguish current review inputs from retrospective or edited descriptions. Static checks and candidate-reported results are distinguished from assistant live executions.
 
-The first live probe exposed a runtime serializer dependency: REST Assured requires Gson to serialize Map request bodies even without explicit Gson imports. Gson 2.13.2 was restored. The subsequent complete API run passed all 13 scenarios and produced 13 passed Allure results. Its results replaced the initial probe in the default report directory. This verification does not change the previously documented Chrome startup limitation.
-
-
-## Latest manually saved JMX
-
-The project JMX includes the renamed “03 Search for a nonexistent term” sampler, laptop heading/product-card assertions and the empty-result message assertion. XML parsing and pattern checks against the candidate-supplied saved HTML responses passed. These are static checks, not a new live JMeter run.
-
-
-## Readability and responsibility review
-
-Step definitions now delegate unused-ID lookup and prerequisite creation to `PetFixture`, and explicit pet operations to `PetClient`. UUID arithmetic was replaced with a bounded positive random long; unused-ID validation and collision-only retries remain. Scenario ID validation is centralized in `PetContext`. UI page methods reuse named team-card/text checks and a shared window-switch helper. Feature wording, tags, assertions, logging and the JMX were preserved.
-
-Verification: 16 scenarios matched in a full dry run; the live API selection passed 13/13 after refactoring (100%). Isolated HTTP checks also verified unused-ID success, collision retry, immediate failure on HTTP 500 and the three-attempt limit; missing fixture ID access fails clearly. Evidence: `target/simplification-api.json`, `target/simplification-api.html`, `target/allure-simplification/`. UI page changes were compiled and step-matched, but no new live UI success is claimed; the Chrome startup limitation above remains.
-
-
-## Task-text review — 2 November 2026
-
-The three task summaries were explicitly supplied as inputs to a new review. UI/API implementations matched their described design, so no duplicate scenarios or cosmetic code changes were added. The exact review invocation and supplied task text/context are recorded in new UI/API/load iteration files.
-
-Latest supplemental UI attempt (`@availableJobApplication or @teamsToggle`, visible mode): 2 selected, 0 passed, 2 failed before page navigation with Chrome SessionNotCreatedException. Evidence: `target/final-review-ui.json` and `target/final-review-ui.html`. This is not a new application-level failure or a fresh vacancy observation.
-
-Latest current JMeter CLI run: 3 samples, 2 passed, 1 failed; home HTTP 403, both searches HTTP 200 with content checks passed. Sanitized sample summary: `load-tests/evidence/2026-11-02/summary.csv`. Raw dashboard remains under ignored `load-tests/results/`. Initial launcher output incorrectly counted multiline assertion-message lines as samples; the CSV-aware parser now reports 3/1 for the same JTL, matching dashboard statistics. Quoted commas, embedded newlines, reordered columns and invalid/empty data were checked. The JMX was not changed.
-
-The 13/13 API live run from the readability refactor remains the latest API evidence; it was not rerun during this documentation-focused review.
+Generated reports, browser profiles, driver logs, raw HTML and IDE files remain Git-ignored. Known service/test-data limitations are recorded in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
