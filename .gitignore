@@ -1,0 +1,18 @@
+target/
+.idea/
+*.iml
+.DS_Store
+*.log
+.env
+load-tests/results/
+chromedriver/
+
+# Keep raw conversation exports private; curated records live in prompts/.
+/private-conversations/
+/promts/
+
+# Local agent state and memory files
+.claude-flow/
+.swarm/
+ruvector.db
+ruvector.db-*

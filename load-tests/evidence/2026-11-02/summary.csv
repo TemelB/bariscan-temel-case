@@ -1,0 +1,4 @@
+label,responseCode,success,elapsed
+01 Navigate to N11 Web Site,403,false,260
+02 Search laptop and list results,200,true,134
+03 Search for a nonexistent term,200,true,652
